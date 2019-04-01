@@ -1,4 +1,5 @@
 import subprocess
+import re
 
 
 class Extractor:
@@ -32,7 +33,7 @@ class Extractor:
             for context in contexts[:self.config.MAX_CONTEXTS]:
                 context_parts = context.split(',')
                 context_word1 = context_parts[0]
-                context_path = context_parts[1]
+                context_path = re.sub(r'[0-9]', '', context_parts[1])
                 context_word2 = context_parts[2]
                 hashed_path = str(self.java_string_hashcode(context_path))
                 hash_to_string_dict[hashed_path] = context_path

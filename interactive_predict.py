@@ -1,11 +1,13 @@
-import traceback
+import glob
 
-from common import common
 from extractor import Extractor
+from pprint import pprint
+from sklearn.feature_extraction.text import CountVectorizer
+import numpy as np
 
-SHOW_TOP_CONTEXTS = 10
-MAX_PATH_LENGTH = 8
-MAX_PATH_WIDTH = 2
+SHOW_TOP_CONTEXTS = 0
+MAX_PATH_LENGTH = 10**3
+MAX_PATH_WIDTH = 10**3
 JAR_PATH = 'JavaExtractor/JPredict/target/JavaExtractor-0.0.1-SNAPSHOT.jar'
 
 
@@ -27,35 +29,45 @@ class InteractivePredictor:
             return file.readlines()
 
     def predict(self):
-        input_filename = 'Input.java'
-        print('Starting interactive prediction...')
-        while True:
-            print(
-                'Modify the file: "%s" and press any key when ready, or "q" / "quit" / "exit" to exit'
-                % input_filename)
-            user_input = input()
-            if user_input.lower() in self.exit_keywords:
-                print('Exiting...')
-                return
+        print(
+            'NOTICE: The cusomized version of predict() in interactive_predict.py was called !'
+        )
+        data_directory = './data/java-fmri/test/'  # set your own dataset directory to be converted into code vectors.
+        input_filenames = sorted(glob.glob(data_directory + '*.java'))
+
+        corpus = []
+        vocab = {}
+        for input_filename in input_filenames:
+            print(input_filename)
             try:
                 predict_lines, hash_to_string_dict = self.path_extractor.extract_paths(
                     input_filename)
+
+                ast_paths = ' '.join(hash_to_string_dict.keys())
+                vocab.update(hash_to_string_dict)
+                corpus.append(ast_paths)
+                continue
+
             except ValueError as e:
                 print(e)
                 continue
-            results, code_vectors = self.model.predict(predict_lines)
-            prediction_results = common.parse_results(
-                results, hash_to_string_dict, topk=SHOW_TOP_CONTEXTS)
-            for i, method_prediction in enumerate(prediction_results):
-                print('Original name:\t' + method_prediction.original_name)
-                for name_prob_pair in method_prediction.predictions:
-                    print('\t(%f) predicted: %s' % (
-                        name_prob_pair['probability'], name_prob_pair['name']))
-                print('Attention:')
-                for attention_obj in method_prediction.attention_paths:
-                    print('%f\tcontext: %s,%s,%s' %
-                          (attention_obj['score'], attention_obj['token1'],
-                           attention_obj['path'], attention_obj['token2']))
-                if self.config.EXPORT_CODE_VECTORS:
-                    print('Code vector:')
-                    print(' '.join(map(str, code_vectors[i])))
+
+        vectorizer = CountVectorizer(token_pattern='\S+')
+        bag = vectorizer.fit_transform(corpus)
+        # print(bag.toarray())
+
+        print('\n====> Creating bag_of_paths.csv...')
+        np.savetxt(
+            './data/bag_of_paths.csv',
+            bag.toarray().astype(int),
+            delimiter=',',
+            fmt='%d')
+
+        print('\n====> Creating index.csv...')
+        print('\nformat="{{hashed_path: num_of_cols}}"')
+        pprint(vectorizer.vocabulary_, width=50)
+        print('\nformat="{{hashed_path: context_path_str}}"')
+        pprint(vocab, width=50)
+        with open('./data/index.csv', mode='w') as f:
+            for hashed_path in sorted(vectorizer.vocabulary_.keys()):
+                f.write('{},{}\n'.format(hashed_path, vocab[hashed_path]))
