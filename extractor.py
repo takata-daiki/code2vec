@@ -9,7 +9,7 @@ class Extractor:
         self.max_path_width = max_path_width
         self.jar_path = jar_path
 
-    def extract_paths(self, path):
+    def extract_paths(self, path, is_context_path_regularized=False):
         command = [
             'java', '-cp', self.jar_path, 'JavaExtractor.App',
             '--max_path_length',
@@ -33,7 +33,10 @@ class Extractor:
             for context in contexts[:self.config.MAX_CONTEXTS]:
                 context_parts = context.split(',')
                 context_word1 = context_parts[0]
-                context_path = re.sub(r'[0-9]', '', context_parts[1])
+                if is_context_path_regularized:
+                    context_path = re.sub(r'[0-9]', '', context_parts[1])
+                else:
+                    context_path = context_parts[1]
                 context_word2 = context_parts[2]
                 hashed_path = str(self.java_string_hashcode(context_path))
                 hash_to_string_dict[hashed_path] = context_path
