@@ -1,4 +1,5 @@
 import glob
+import os
 from common import common
 from extractor import Extractor
 
@@ -6,6 +7,9 @@ SHOW_TOP_CONTEXTS = 10
 MAX_PATH_LENGTH = 8
 MAX_PATH_WIDTH = 2
 JAR_PATH = 'JavaExtractor/JPredict/target/JavaExtractor-0.0.1-SNAPSHOT.jar'
+
+SRC_PATH = '/Users/daiki-tak/GitHub/ojcode-metric-extractor/data/ALDS1_12_C@test/tmp'
+DEST_PATH = '/Users/daiki-tak/GitHub/ojcode-metric-extractor/data/ALDS1_12_C@test/codevec'
 
 
 class InteractivePredictor:
@@ -30,8 +34,8 @@ class InteractivePredictor:
         print(
             'NOTICE: The cusomized version of predict() in interactive_predict.py was called!'
         )
-        data_directory = './data/ALDS1_12_C@test/'  # set your own dataset directory to be converted into code vectors.
-        input_filenames = sorted(glob.glob(data_directory + '*.java'))
+        data_directory = SRC_PATH  # set your own dataset directory to be converted into code vectors.
+        input_filenames = sorted(glob.glob(data_directory + '/*.java'))
 
         for input_filename in input_filenames:
             print(input_filename)
@@ -44,7 +48,9 @@ class InteractivePredictor:
             prediction_results = common.parse_results(
                 results, hash_to_string_dict, topk=SHOW_TOP_CONTEXTS)
 
-            f_out = input_filename + '.txt'
+            os.makedirs(DEST_PATH, exist_ok=True)
+            name = os.path.basename(input_filename)
+            f_out = DEST_PATH + '/' + name + '.txt'
             with open(f_out, 'w') as f:
                 for i, method_prediction in enumerate(prediction_results):
                     print('Original name:\t' + method_prediction.original_name)
@@ -61,5 +67,5 @@ class InteractivePredictor:
                         print('Code vector:')
                         print(cv)
                         # write code vector in text files
-                        f.write(method_prediction.original_name + ',' + cv +
-                                '\n')
+                        f.write('{},{}\n'.format(
+                            method_prediction.original_name, cv))
