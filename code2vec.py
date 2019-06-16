@@ -1,6 +1,7 @@
 from common import Config, VocabType
 from argparse import ArgumentParser
 from interactive_predict import InteractivePredictor
+from interactive_collect import InteractiveCollector
 from model import Model
 import sys
 
@@ -30,6 +31,7 @@ if __name__ == '__main__':
                         help='if specified and loading a trained model, release the loaded model for a lower model '
                              'size.')
     parser.add_argument('--predict', action='store_true')
+    parser.add_argument('--collect', action='store_true')
     args = parser.parse_args()
 
     config = Config.get_default_config(args)
@@ -53,4 +55,7 @@ if __name__ == '__main__':
     if args.predict:
         predictor = InteractivePredictor(config, model)
         predictor.predict()
+    if args.collect:
+        collector = InteractiveCollector(config, model)
+        collector.collect()
     model.close_session()

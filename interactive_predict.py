@@ -1,14 +1,15 @@
 import glob
-
+import os
+from common import common
 from extractor import Extractor
-from pprint import pprint
-from sklearn.feature_extraction.text import CountVectorizer
-import numpy as np
 
-SHOW_TOP_CONTEXTS = 0
-MAX_PATH_LENGTH = 10**3
-MAX_PATH_WIDTH = 10**3
+SHOW_TOP_CONTEXTS = 10
+MAX_PATH_LENGTH = 8
+MAX_PATH_WIDTH = 2
 JAR_PATH = 'JavaExtractor/JPredict/target/JavaExtractor-0.0.1-SNAPSHOT.jar'
+
+SRC_PATH = '/Users/daiki-tak/GitHub/ojcode-metric-extractor/data/ALDS1_12_C@test/tmp'
+DEST_PATH = '/Users/daiki-tak/GitHub/ojcode-metric-extractor/data/ALDS1_12_C@test/codevec'
 
 
 class InteractivePredictor:
@@ -28,46 +29,43 @@ class InteractivePredictor:
         with open(input_filename, 'r') as file:
             return file.readlines()
 
+    # cusomized function to perform prediction from input files
     def predict(self):
         print(
-            'NOTICE: The cusomized version of predict() in interactive_predict.py was called !'
+            'NOTICE: The cusomized version of predict() in interactive_predict.py was called!'
         )
-        data_directory = './data/java-fmri/test/'  # set your own dataset directory to be converted into code vectors.
-        input_filenames = sorted(glob.glob(data_directory + '*.java'))
+        data_directory = SRC_PATH  # set your own dataset directory to be converted into code vectors.
+        input_filenames = sorted(glob.glob(data_directory + '/*.java'))
 
-        corpus = []
-        vocab = {}
         for input_filename in input_filenames:
             print(input_filename)
             try:
                 predict_lines, hash_to_string_dict = self.path_extractor.extract_paths(
                     input_filename)
-
-                ast_paths = ' '.join(hash_to_string_dict.keys())
-                vocab.update(hash_to_string_dict)
-                corpus.append(ast_paths)
-                continue
-
             except ValueError as e:
                 print(e)
-                continue
+            results, code_vectors = self.model.predict(predict_lines)
+            prediction_results = common.parse_results(
+                results, hash_to_string_dict, topk=SHOW_TOP_CONTEXTS)
 
-        vectorizer = CountVectorizer(token_pattern='\S+')
-        bag = vectorizer.fit_transform(corpus)
-        # print(bag.toarray())
-
-        print('\n====> Creating bag_of_paths.csv...')
-        np.savetxt(
-            './data/bag_of_paths.csv',
-            bag.toarray().astype(int),
-            delimiter=',',
-            fmt='%d')
-
-        print('\n====> Creating index.csv...')
-        print('\nformat="{{hashed_path: num_of_cols}}"')
-        pprint(vectorizer.vocabulary_, width=50)
-        print('\nformat="{{hashed_path: context_path_str}}"')
-        pprint(vocab, width=50)
-        with open('./data/index.csv', mode='w') as f:
-            for hashed_path in sorted(vectorizer.vocabulary_.keys()):
-                f.write('{},{}\n'.format(hashed_path, vocab[hashed_path]))
+            os.makedirs(DEST_PATH, exist_ok=True)
+            name = os.path.basename(input_filename)
+            f_out = DEST_PATH + '/' + name + '.txt'
+            with open(f_out, 'w') as f:
+                for i, method_prediction in enumerate(prediction_results):
+                    print('Original name:\t' + method_prediction.original_name)
+                    #  for name_prob_pair in method_prediction.predictions:
+                    #      print('\t(%f) predicted: %s' % (
+                    #          name_prob_pair['probability'], name_prob_pair['name']))
+                    #  print('Attention:')
+                    #  for attention_obj in method_prediction.attention_paths:
+                    #      print('%f\tcontext: %s,%s,%s' %
+                    #            (attention_obj['score'], attention_obj['token1'],
+                    #             attention_obj['path'], attention_obj['token2']))
+                    if self.config.EXPORT_CODE_VECTORS:
+                        cv = ' '.join(map(str, code_vectors[i]))
+                        print('Code vector:')
+                        print(cv)
+                        # write code vector in text files
+                        f.write('{},{}\n'.format(
+                            method_prediction.original_name, cv))
