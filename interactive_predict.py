@@ -8,8 +8,9 @@ MAX_PATH_LENGTH = 8
 MAX_PATH_WIDTH = 2
 JAR_PATH = 'JavaExtractor/JPredict/target/JavaExtractor-0.0.1-SNAPSHOT.jar'
 
-SRC_PATH = '/Users/daiki-tak/GitHub/ojcode-metric-extractor/data/ALDS1_12_C@test/tmp'
-DEST_PATH = '/Users/daiki-tak/GitHub/ojcode-metric-extractor/data/ALDS1_12_C@test/codevec'
+ROOT_PATH = '/Users/daiki-tak/GitHub/ojcode-metric-extractor/data/aoj/0089@test'
+SRC_PATH = ROOT_PATH + '/tmp'
+DEST_PATH = ROOT_PATH + '/codevec'
 
 
 class InteractivePredictor:
