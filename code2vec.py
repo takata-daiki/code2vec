@@ -32,8 +32,8 @@ if __name__ == '__main__':
                              'size.')
     parser.add_argument('--predict', action='store_true')
     parser.add_argument('--collect', action='store_true')
-    parser.add_argument('--input', metavar='FILE/DIR', required=False)
-    parser.add_argument('--output', metavar='FILE/DIR', required=False)
+    parser.add_argument('--input', dest='input_path', metavar='FILE/DIR', required=False)
+    parser.add_argument('--output', dest='output_path', metavar='FILE/DIR', required=False)
     args = parser.parse_args()
 
     config = Config.get_default_config(args)
@@ -55,12 +55,12 @@ if __name__ == '__main__':
             print(results)
             print('Precision: ' + str(precision) + ', recall: ' + str(recall) + ', F1: ' + str(f1))
     if args.predict:
-        if args.input is not None and args.output is not None:
-            predictor = InteractivePredictor(config, model, ipath=args.input, opath=args.output)
-        elif args.input is not None:
-            predictor = InteractivePredictor(config, model, ipath=args.input)
-        elif args.output is not None:
-            predictor = InteractivePredictor(config, model, opath=args.output)
+        if args.input_path is not None and args.output_path is not None:
+            predictor = InteractivePredictor(config, model, ipath=args.input_path, opath=args.output_path)
+        elif args.input_path is not None:
+            predictor = InteractivePredictor(config, model, ipath=args.input_path)
+        elif args.output_path is not None:
+            predictor = InteractivePredictor(config, model, opath=args.output_path)
         else:
             predictor = InteractivePredictor(config, model)
         predictor.predict()

@@ -1,5 +1,4 @@
-import glob
-import os
+from pathlib import Path
 from common import common
 from extractor import Extractor
 
@@ -8,9 +7,9 @@ MAX_PATH_LENGTH = 8
 MAX_PATH_WIDTH = 2
 JAR_PATH = 'JavaExtractor/JPredict/target/JavaExtractor-0.0.1-SNAPSHOT.jar'
 
-ROOT_PATH = '/Users/daiki-tak/GitHub/ojcode-metric-extractor/data/aoj/0089@test'
-SRC_PATH = ROOT_PATH + '/tmp'
-DST_PATH = ROOT_PATH + '/codevec'
+ROOT_PATH = Path('/Users/daiki-tak/GitHub/ojcode-metric-extractor/data/aoj/0089@test')
+SRC_PATH = ROOT_PATH / 'tmp'
+DST_PATH = ROOT_PATH / 'codevec'
 
 
 class InteractivePredictor:
@@ -26,8 +25,11 @@ class InteractivePredictor:
             jar_path=JAR_PATH,
             max_path_length=MAX_PATH_LENGTH,
             max_path_width=MAX_PATH_WIDTH)
-        SRC_PATH = ipath
-        DST_PATH = opath
+        SRC_PATH = Path(ipath)
+        DST_PATH = Path(opath)
+        print('---')
+        print(f'SRC_PATH={ipath}')
+        print(f'DST_PATH={opath}')
 
     def read_file(self, input_filename):
         with open(input_filename, 'r') as file:
@@ -39,31 +41,27 @@ class InteractivePredictor:
             'NOTICE: The cusomized version of predict() in interactive_predict.py was called!'
         )
 
-        src = os.path.basename(SRC_PATH)
         input_filenames = [SRC_PATH]
-        if os.path.split(src)[1] != '.java':
-            data_directory = SRC_PATH  # set your own dataset directory to be converted into code vectors.
-            input_filenames = sorted(glob.glob(data_directory + '/*.java'))
+        if not SRC_PATH.match('*.java'):
+            input_filenames = sorted(SRC_PATH.glob('*.java'))
 
         for input_filename in input_filenames:
             print(input_filename)
             try:
                 predict_lines, hash_to_string_dict = self.path_extractor.extract_paths(
-                    input_filename)
+                    input_filename.as_posix())
             except ValueError as e:
                 print(e)
             results, code_vectors = self.model.predict(predict_lines)
             prediction_results = common.parse_results(
                 results, hash_to_string_dict, topk=SHOW_TOP_CONTEXTS)
 
-            dst = os.path.basename(DST_PATH)
-            f_out = DST_PATH + '.txt'
-            if os.path.split(dst)[1] != '.java':
-                os.makedirs(DST_PATH, exist_ok=True)
-                name = os.path.basename(input_filename)
-                f_out = DST_PATH + '/' + name + '.txt'
+            f_out = f'{DST_PATH.as_posix()}.txt'
+            if not DST_PATH.match('*.java'):
+                DST_PATH.mkdir(parents=True, exist_ok=True)
+                f_out = DST_PATH / f'{input_filename.stem}.txt'
 
-            with open(f_out, 'w') as f:
+            with f_out.open(mode='w') as f:
                 for i, method_prediction in enumerate(prediction_results):
                     print('Original name:\t' + method_prediction.original_name)
                     #  for name_prob_pair in method_prediction.predictions:
