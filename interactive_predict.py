@@ -56,8 +56,8 @@ class InteractivePredictor:
             prediction_results = common.parse_results(
                 results, hash_to_string_dict, topk=SHOW_TOP_CONTEXTS)
 
-            f_out = f'{DST_PATH.as_posix()}.txt'
-            if not DST_PATH.match('*.java'):
+            f_out = DST_PATH
+            if not DST_PATH.match('*.txt'):
                 DST_PATH.mkdir(parents=True, exist_ok=True)
                 f_out = DST_PATH / f'{input_filename.stem}.txt'
 
