@@ -52,6 +52,7 @@ class InteractivePredictor:
                     input_filename.as_posix())
             except ValueError as e:
                 print(e)
+                continue
             results, code_vectors = self.model.predict(predict_lines)
             prediction_results = common.parse_results(
                 results, hash_to_string_dict, topk=SHOW_TOP_CONTEXTS)
