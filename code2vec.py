@@ -34,16 +34,9 @@ if __name__ == '__main__':
             config.log(
                 str(eval_results).replace('topk', 'top{}'.format(config.TOP_K_WORDS_CONSIDERED_DURING_PREDICTION)))
     if config.PREDICT:
-        if args.input_path is not None and args.output_path is not None:
-            predictor = InteractivePredictor(config, model, ipath=args.input_path, opath=args.output_path)
-        elif args.input_path is not None:
-            predictor = InteractivePredictor(config, model, ipath=args.input_path)
-        elif args.output_path is not None:
-            predictor = InteractivePredictor(config, model, opath=args.output_path)
-        else:
-            predictor = InteractivePredictor(config, model)
+        predictor = InteractivePredictor(config, model)
         predictor.predict()
-    if args.collect:
+    if config.COLLECT:
         collector = InteractiveCollector(config, model)
         collector.collect()
     model.close_session()

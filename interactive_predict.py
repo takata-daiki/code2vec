@@ -16,7 +16,7 @@ DST_PATH = ROOT_PATH / 'codevec'
 class InteractivePredictor:
     exit_keywords = ['exit', 'quit', 'q']
 
-    def __init__(self, config, model, ipath=SRC_PATH, opath=DST_PATH):
+    def __init__(self, config, model):
         global SRC_PATH, DST_PATH
         model.predict([])
         self.model = model
@@ -26,11 +26,13 @@ class InteractivePredictor:
             jar_path=JAR_PATH,
             max_path_length=MAX_PATH_LENGTH,
             max_path_width=MAX_PATH_WIDTH)
-        SRC_PATH = Path(ipath)
-        DST_PATH = Path(opath)
+        if config.INPUT_PATH:
+            SRC_PATH = Path(config.INPUT_PATH)
+        if config.OUTPUT_PATH:
+            DST_PATH = Path(config.OUTPUT_PATH)
         print('---')
-        print(f'SRC_PATH={ipath}')
-        print(f'DST_PATH={opath}')
+        print(f'SRC_PATH={config.INPUT_PATH}')
+        print(f'DST_PATH={config.OUTPUT_PATH}')
 
     def read_file(self, input_filename):
         with open(input_filename, 'r') as file:
