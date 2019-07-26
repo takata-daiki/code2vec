@@ -7,7 +7,8 @@ MAX_PATH_LENGTH = 8
 MAX_PATH_WIDTH = 2
 JAR_PATH = 'JavaExtractor/JPredict/target/JavaExtractor-0.0.1-SNAPSHOT.jar'
 
-ROOT_PATH = Path('/Users/daiki-tak/GitHub/ojcode-metric-extractor/data/aoj/0089@test')
+ROOT_PATH = Path(
+    '/Users/daiki-tak/GitHub/ojcode-metric-extractor/data/aoj/0089@test')
 SRC_PATH = ROOT_PATH / 'tmp'
 DST_PATH = ROOT_PATH / 'codevec'
 
@@ -53,9 +54,13 @@ class InteractivePredictor:
             except ValueError as e:
                 print(e)
                 continue
-            results, code_vectors = self.model.predict(predict_lines)
-            prediction_results = common.parse_results(
-                results, hash_to_string_dict, topk=SHOW_TOP_CONTEXTS)
+
+            raw_prediction_results = self.model.predict(predict_lines)
+            method_prediction_results = common.parse_prediction_results(
+                raw_prediction_results,
+                hash_to_string_dict,
+                self.model.vocabs.target_vocab.special_words,
+                topk=SHOW_TOP_CONTEXTS)
 
             f_out = DST_PATH
             if not DST_PATH.match('*.txt'):
@@ -63,18 +68,20 @@ class InteractivePredictor:
                 f_out = DST_PATH / f'{input_filename.stem}.txt'
 
             with f_out.open(mode='w') as f:
-                for i, method_prediction in enumerate(prediction_results):
+                for raw_prediction, method_prediction in zip(
+                        raw_prediction_results, method_prediction_results):
                     print('Original name:\t' + method_prediction.original_name)
                     #  for name_prob_pair in method_prediction.predictions:
-                    #      print('\t(%f) predicted: %s' % (
-                    #          name_prob_pair['probability'], name_prob_pair['name']))
+                    #      print('\t(%f) predicted: %s' %
+                    #            (name_prob_pair['probability'],
+                    #             name_prob_pair['name']))
                     #  print('Attention:')
                     #  for attention_obj in method_prediction.attention_paths:
                     #      print('%f\tcontext: %s,%s,%s' %
                     #            (attention_obj['score'], attention_obj['token1'],
                     #             attention_obj['path'], attention_obj['token2']))
                     if self.config.EXPORT_CODE_VECTORS:
-                        cv = ' '.join(map(str, code_vectors[i]))
+                        cv = ' '.join(map(str, raw_prediction.code_vector))
                         print('Code vector:')
                         print(cv)
                         # write code vector in text files
